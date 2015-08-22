@@ -2,14 +2,13 @@ var http = require('http');
 var https = require('https');
 var url = require('url');
 
-var Pbf = require('pbf');
 var api = require('planet-client');
-var geobuf = require('geobuf-published');
 
 var corsHeaders = {
   'Access-Control-Allow-Credentials': true,
   'Access-Control-Allow-Headers': 'Accept, Authorization, Content-Type',
   'Access-Control-Allow-Methods': 'DELETE, GET, OPTIONS, POST, PUT',
+  'Access-Control-Expose-Headers': 'Links',
   'Access-Control-Max-Age': 86400,
   'Allow': 'HEAD, GET, POST, OPTIONS',
   'Strict-Transport-Security': 'max-age=31536000',
@@ -68,12 +67,21 @@ function proxyHandler(req, res) {
  * @param {api.Page} page A page of scenes.
  */
 function scenesResponse(req, res, page) {
-  var buffer = geobuf.encode(page.data, new Pbf());
+  var buffer = page.data;
+
+  var linksHeader = [];
+  if (page.nextLink) {
+    linksHeader.push('<' + page.nextLink + '>; rel="next"');
+  }
+  if (page.prevLink) {
+    linksHeader.push('<' + page.prevLink + '>; rel="prev"');
+  }
 
   var headers = assign({
-    'Content-Type': 'application/x-protobuf',
+    'Content-Type': 'application/octet-stream',
     'Content-Length': buffer.length,
-    'Access-Control-Allow-Origin': req.headers.origin
+    'Access-Control-Allow-Origin': req.headers.origin,
+    'Links': linksHeader.join(', ')
   }, corsHeaders);
 
   res.writeHead(200, headers);
@@ -110,10 +118,10 @@ function scenesHandler(req, res) {
   api.auth.setKey(req.headers.authorization.split(' ')[1])
 
   var parts = url.parse(req.url, true);
-  var query = query.query;
+  var query = parts.query;
   query.type = parts.pathname.split('/')[3];
 
-  api.scenes.search(query, {augmentLinks: false})
+  api.scenes.search(query, {geobuf: true})
     .then(scenesResponse.bind(null, req, res))
     .catch(scenesError.bind(null, req, res))
 }
@@ -128,7 +136,9 @@ function handler(req, res) {
     return optionsHandler(req, res);
   }
 
-  if (url.parse(req.url).pathname.indexOf('/v0/scenes/') === 0) {
+  var parts = url.parse(req.url, true);
+  if (parts.query.format === 'geobuf' &&
+      parts.pathname.indexOf('/v0/scenes/') === 0) {
     return scenesHandler(req, res);
   }
 
@@ -144,5 +154,5 @@ function assign(target, source) {
 
 if (require.main === module) {
   http.createServer(handler).listen(3003);
-  process.stdout.write('Server started: http://localhost:3000/\n');
+  process.stdout.write('Server started: http://localhost:3003/\n');
 }
