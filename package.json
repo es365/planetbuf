@@ -1,0 +1,28 @@
+{
+  "name": "planetbuf",
+  "version": "0.0.0",
+  "description": "Protocol buffers for the Planet API",
+  "private": true,
+  "main": "serve.js",
+  "scripts": {
+    "test": "eslint serve.js",
+    "start": "node serve.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/planetlabs/planetbuf.git"
+  },
+  "bugs": {
+    "url": "https://github.com/planetlabs/planetbuf/issues"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "geobuf-published": "^1.0.1",
+    "pbf": "^1.3.4",
+    "planet-client": "^0.8.1"
+  },
+  "devDependencies": {
+    "eslint": "^1.2.1",
+    "eslint-config-planet": "^3.0.0"
+  }
+}
