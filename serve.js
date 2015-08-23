@@ -8,7 +8,7 @@ var corsHeaders = {
   'Access-Control-Allow-Credentials': true,
   'Access-Control-Allow-Headers': 'Accept, Authorization, Content-Type',
   'Access-Control-Allow-Methods': 'DELETE, GET, OPTIONS, POST, PUT',
-  'Access-Control-Expose-Headers': 'Links',
+  'Access-Control-Expose-Headers': 'Link',
   'Access-Control-Max-Age': 86400,
   'Allow': 'HEAD, GET, POST, OPTIONS',
   'Strict-Transport-Security': 'max-age=31536000',
@@ -69,19 +69,19 @@ function proxyHandler(req, res) {
 function scenesResponse(req, res, page) {
   var buffer = page.data;
 
-  var linksHeader = [];
+  var linkHeader = [];
   if (page.nextLink) {
-    linksHeader.push('<' + page.nextLink + '>; rel="next"');
+    linkHeader.push('<' + page.nextLink + '>; rel="next"');
   }
   if (page.prevLink) {
-    linksHeader.push('<' + page.prevLink + '>; rel="prev"');
+    linkHeader.push('<' + page.prevLink + '>; rel="prev"');
   }
 
   var headers = assign({
     'Content-Type': 'application/octet-stream',
     'Content-Length': buffer.length,
     'Access-Control-Allow-Origin': req.headers.origin,
-    'Links': linksHeader.join(', ')
+    'Link': linkHeader.join(', ')
   }, corsHeaders);
 
   res.writeHead(200, headers);
