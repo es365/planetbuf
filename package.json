@@ -19,7 +19,7 @@
   "dependencies": {
     "geobuf-published": "^1.0.1",
     "pbf": "^1.3.4",
-    "planet-client": "^0.8.1"
+    "planet-client": "git://github.com/planetlabs/planet-client-js.git#2f920a287959f049008c6e472281db8c237da0c5"
   },
   "devDependencies": {
     "eslint": "^1.2.1",

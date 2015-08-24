@@ -103,7 +103,7 @@ function scenesError(req, res, err) {
     }
     res.end();
   } else {
-    process.stderr.write(err.message + '\n');
+    process.stderr.write(err.stack + '\n');
     res.writeHead(500);
     res.end('Unknown error');
   }
@@ -115,7 +115,24 @@ function scenesError(req, res, err) {
  * @param {http.ServerResponse} res The response.
  */
 function scenesHandler(req, res) {
-  api.auth.setKey(req.headers.authorization.split(' ')[1])
+  var authHeader = req.headers.authorization || '';
+  var authParts = authHeader.split(' ');
+  if (authParts[0] === 'api-key') {
+    api.auth.setKey(authParts[1]);
+  } else if (authParts[0] === 'Bearer') {
+    api.auth.setToken(authParts[1]);
+  } else if (authParts[0] === 'Basic') {
+    var buffer = new Buffer(authParts[1], 'base64');
+    var creds = String(buffer).split(':');
+    api.auth.setKey(creds[0]);
+  } else {
+    res.writeHead(401, assign({
+      'WWW-Authenticate': 'Basic realm="Please enter your API key"',
+      'Content-Length': 0
+    }, corsHeaders));
+    res.end();
+    return;
+  }
 
   var parts = url.parse(req.url, true);
   var query = parts.query;
