@@ -1,6 +1,7 @@
 var http = require('http');
 var https = require('https');
 var url = require('url');
+var zlib = require('zlib');
 
 var api = require('planet-client');
 
@@ -79,13 +80,31 @@ function scenesResponse(req, res, page) {
 
   var headers = assign({
     'Content-Type': 'application/octet-stream',
-    'Content-Length': buffer.length,
     'Access-Control-Allow-Origin': req.headers.origin,
     'Link': linkHeader.join(', ')
   }, corsHeaders);
 
-  res.writeHead(200, headers);
-  res.end(buffer);
+  var acceptEncoding = req.headers['accept-encoding'] || '';
+  if (acceptEncoding.match(/\bgzip\b/)) {
+    zlib.gzip(buffer, function(err, data) {
+      if (err) {
+        process.stderr.write(err.stack + '\n');
+        res.writeHead(500);
+        res.end('Unknown error');
+      }
+      assign(headers, {
+        'Content-Length': data.length,
+        'Content-Encoding': 'gzip'
+      });
+      res.writeHead(200, headers);
+      res.end(data);
+    });
+  } else {
+    headers['Content-Length'] = buffer.length;
+    res.writeHead(200, headers);
+    res.end(buffer);
+  }
+
 }
 
 /**
